@@ -4,6 +4,8 @@
 # Import Statements
 import yfinance as yf
 import requests
+import os
+import pandas as pd
 
 
 # Helper Functions
@@ -43,7 +45,7 @@ def get_fundamentals(ticker):
     try:
         company_info = yf.Ticker(ticker).info
 
-        resulting_dict = {}
+        resulting_dict = {"ticker": ticker}
         fundamental_metrics = [
             "marketCap",
             "enterpriseValue",
@@ -80,3 +82,22 @@ def get_fundamentals(ticker):
         print(f"The ticker you entered '{ticker}' does not exist or was not found.")
     except Exception as ex:
         print(f"An error occurred: {ex}")
+
+
+def get_ticker_list_N(
+    file_path=os.path.join("..", "data", "raw", "nasdaq_screener.csv"),
+):
+    """_summary_
+
+    Args:
+        file_path (string): The path of the nasdaq file in local computer. Defaults to os.path.join("..", "data", "raw", "nasdaq_screener.csv").
+    Returns:
+        list: A list of tickers for all NASDAQ stocks.
+
+    """
+    try:
+        raw_nasdaq_data = pd.read_csv(file_path)
+        ticker_list = list(raw_nasdaq_data["Symbol"])
+        return ticker_list
+    except Exception as e:
+        print(f"Error encountered: {e}")
