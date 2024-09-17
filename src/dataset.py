@@ -87,17 +87,82 @@ def get_fundamentals(ticker):
 def get_ticker_list_N(
     file_path=os.path.join("..", "data", "raw", "nasdaq_screener.csv"),
 ):
-    """_summary_
+    """
+    Retrieve a list of tickers from a NASDAQ company file.
 
     Args:
-        file_path (string): The path of the nasdaq file in local computer. Defaults to os.path.join("..", "data", "raw", "nasdaq_screener.csv").
-    Returns:
-        list: A list of tickers for all NASDAQ stocks.
+        file_path (string): The path to the NASDAQ screener CSV file. Defaults to os.path.join("..", "data", "raw", "nasdaq_screener.csv").
 
+    Returns:
+        list: A list of tickers for all NASDAQ stocks. Returns an empty list if an error occurs.
+
+    Raises:
+        FileNotFoundError: If the CSV file is not found at the specified path.
+        KeyError: If the 'Symbol' column is not present in the CSV file.
+        Exception: For any other unexpected errors during file reading or processing.
     """
     try:
+        if not os.path.exists(file_path):
+            print(f"File not found: {file_path}")
+            return []
+
         raw_nasdaq_data = pd.read_csv(file_path)
-        ticker_list = list(raw_nasdaq_data["Symbol"])
+
+        if "Symbol" not in raw_nasdaq_data.columns:
+            print("Error: 'Symbol' column not found in the file.")
+            return []
+
+        ticker_list = list(raw_nasdaq_data["Symbol"].dropna().unique())
         return ticker_list
+
+    except (FileNotFoundError, KeyError) as e:
+        print(e)
+        return []
+
     except Exception as e:
         print(f"Error encountered: {e}")
+
+
+def get_price_1year(ticker, price_type="All"):
+    """
+    Retrieve price data for the given stock ticker for the past year.
+
+    Args:
+        ticker (str): The stock ticker symbol (e.g., 'AAPL' for Apple, 'MSFT' for Microsoft).
+        price_type (str): The type of price data to retrieve. Options are 'All', 'Open', 'Close',
+                          'High', 'Low' (e.g. 'Close' means Closing Price ONLY). Defaults to 'All'.
+
+    Returns:
+        pd.DataFrame or pd.Series: Price data for the provided ticker, based on the specified price_type.
+                                   If 'All' is selected, it returns the full price DataFrame. Otherwise, it returns the selected column.
+
+    Raises:
+        ValueError: If the `price_type` is not a valid option.
+    """
+
+    try:
+        symbol = yf.Ticker(ticker)
+        price_df = symbol.history(period="1y")
+
+        valid_price_types = {
+            "All": price_df,
+            "Open": price_df["Open"],
+            "Close": price_df["Close"],
+            "High": price_df["High"],
+            "Low": price_df["Low"],
+        }
+
+        if price_type not in valid_price_types:
+            raise ValueError(
+                f"Invalid price_type: {price_type}. Choose from 'All', 'Open', 'Close', 'High', 'Low'."
+            )
+
+        return valid_price_types[price_type]
+
+    except ValueError as ve:
+        print(ve)
+        return None
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
