@@ -84,7 +84,7 @@ def get_fundamentals(ticker):
         print(f"An error occurred: {ex}")
 
 
-def get_ticker_list_N(
+def get_Nasdaq_ticker_list(
     file_path=os.path.join("..", "data", "raw", "nasdaq_screener.csv"),
 ):
     """
@@ -150,6 +150,50 @@ def get_price_1year(ticker, price_type="All"):
             "Close": price_df["Close"],
             "High": price_df["High"],
             "Low": price_df["Low"],
+        }
+
+        if price_type not in valid_price_types:
+            raise ValueError(
+                f"Invalid price_type: {price_type}. Choose from 'All', 'Open', 'Close', 'High', 'Low'."
+            )
+
+        return valid_price_types[price_type]
+
+    except ValueError as ve:
+        print(ve)
+        return None
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
+def get_price_all_time(ticker, price_type="All"):
+    """
+    Retrieve price data for the given stock ticker for all available time.
+
+    Args:
+        ticker (str): The stock ticker symbol (e.g., 'AAPL' for Apple, 'MSFT' for Microsoft).
+        price_type (str): The type of price data to retrieve. Options are 'All', 'Open', 'Close',
+                          'High', 'Low' (e.g. 'Close' means Closing Price ONLY). Defaults to 'All'.
+
+    Returns:
+        pd.DataFrame: Price data for the provided ticker. If 'All' is selected, it returns the full price DataFrame.
+                        Otherwise, it returns the selected column.
+    Raises:
+        ValueError: If the `price_type` is not a valid option.
+    """
+
+    try:
+        symbol = yf.Ticker(ticker)
+        price_df = symbol.history(period="max")
+
+        valid_price_types = {
+            "All": price_df,
+            "Open": price_df["Open"].to_frame(),
+            "Close": price_df["Close"].to_frame(),
+            "High": price_df["High"].to_frame(),
+            "Low": price_df["Low"].to_frame(),
         }
 
         if price_type not in valid_price_types:
