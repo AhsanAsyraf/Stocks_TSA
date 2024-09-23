@@ -1,39 +1,17 @@
 """
-This file contains functions for training a Bayesian model
+This file contains functions for training an empirical model based on conditional probability concept.
 Note 1: Attempting to use this concept in stocks prediction (performing / not performing)
 
-Formula: P(A|B) = P(B|A) * P(A) / P(B)
-P(Stock A performing | Stock B performing) = P(Stock B performing | Stock A performing) * P(Stock A performing) / P(Stock B performing)
-P(Stock B performing) can be computed by looking at the price history of Stock B,
-    and compute daily percentage change in price. If the percentage change is positive, we consider it as "performing", otherwise "not performing".
-P(Stock A performing) can be computed in the same way.
-P(Stock B performing | Stock A performing) can be computed by looking at the percentage change in price of Stock B on the days when Stock A is performing.
+Bayesian probability is not applicable in this case because events are:
+   Event A: Stock A performing today
+   Event B: Stock B performed yesterday
+P(A|B) is possible, but P(B|A) is not possible because the logic is not there.
 """
 
 import dataset as ds
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-def p_stock_performing(ticker, price_type="Close"):
-    """
-    Compute the probability of Stock A performing based on the price data.
-
-    Args:
-        ticker (str): The stock ticker symbol.
-        price_type (str): The type of price data to use. Default is "Close".
-
-    Returns:
-        float: The probability of Stock A performing.
-    """
-
-    price_data = ds.get_price_all_time(ticker, price_type)
-
-    price_data["Daily_Return"] = price_data["Close"].pct_change()
-    price_data["Performing"] = price_data["Daily_Return"] > 0
-    prob_performing = price_data.iloc[1:]["Performing"].mean()
-    return prob_performing
 
 
 def p_conditional(tickerA, tickerB, threshold=0):
@@ -69,26 +47,6 @@ def p_conditional(tickerA, tickerB, threshold=0):
     A_when_B_performs = price_data_A[price_data_B["Performing"]]
     prob_A_performs_given_B = A_when_B_performs["Performing"].mean()
     return prob_A_performs_given_B
-
-
-def bayes_theorem(tickerA, tickerB):
-    """
-    Compute the probability of Stock A performing given Stock B is performing.
-
-    Args:
-        tickerA (str): The stock ticker symbol for Stock A.
-        tickerB (str): The stock ticker symbol for Stock B.
-
-    Returns:
-        float: The probability of Stock A performing given Stock B is performing.
-    """
-
-    prob_A = p_stock_performing(tickerA)
-    prob_B = p_stock_performing(tickerB)
-    prob_A_given_B = p_conditional(tickerA, tickerB)
-
-    prob_B_given_A = prob_A_given_B * prob_A / prob_B
-    return prob_A_given_B
 
 
 def get_conditional_performance_graph(
